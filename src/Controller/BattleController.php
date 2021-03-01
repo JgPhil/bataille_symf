@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+
 use App\Entity\Goblin;
 use App\Entity\Orc;
 use App\Entity\Witch;
@@ -9,13 +10,13 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
+
 class BattleController extends AbstractController
 {
     private $goblin;
     private $witch;
     private $orc;
     private $playersAlive;
-    private $players;
     private $summary = "";
 
 
@@ -28,15 +29,13 @@ class BattleController extends AbstractController
         $this->players = array_slice($this->playersAlive, 0);
     }
 
-
     /**
      * @Route("/", name="battle")
      */
     public function index(): Response
     {
         return $this->render('battle.html.twig', [
-            'players_alive' => $this->playersAlive,
-            'players' => $this->players
+            'players_alive' => $this->playersAlive
         ]);
     }
 
@@ -53,36 +52,44 @@ class BattleController extends AbstractController
      */
     public function nextTurn()
     {
-        $initialStatus = $this->getPlayersStatus();
-        if (count($this->playersAlive) > 1) {
-            for ($i = 0; $i < count($this->playersAlive); $i++) {
-                $warrior = $this->playersAlive[$i];
+        $playersArray = $this->playersAlive;
+        
+        if (count($playersArray) > 1) {
+            for ($i = 0; $i < count($playersArray); $i++) {
+                $warrior = $playersArray[$i];
                 $this->summary .= $warrior->plague();
-                $warrior->maybeSuccumbs($this->playersAlive);
-                $this->summary .= !in_array($warrior, $this->playersAlive) ?
-                $warrior->getName() . ' a succombé ' : '';
+                $warrior->maybeSuccumbs($playersArray);
+                $this->summary .= !in_array($warrior, $playersArray) ?
+                    $warrior->getName() . ' a succombé ' : '';
                 $method = $warrior->getRandomMethod();
-                $target = $warrior->searchRandomTarget($this->playersAlive);
+                $target = $warrior->searchRandomTarget($playersArray);
                 $initialHealth = $target->getHealth();
                 $warrior->$method($target); ////////////ATTTAAAACCKK
                 $damages = $initialHealth - $target->getHealth();
-                $this->summary .=
-                    $warrior->getName() . ' a attaqué '
-                    . $target->getName() . ' avec ' . $method . ' et lui a infligé '
-                    . $damages . ' dégats ';
-                $this->summary .=
-                    $target->maybeSuccumbs($this->playersAlive);
-                $this->summary .= !in_array($target, $this->playersAlive) ?
-                    $target->getName() . ' a succombé ' : '';
+                if ($method == 'heal_action') {
+                    $this->summary .=
+                        $warrior->getName() . ' s\'est soigné de 3 points de vie';
+                } else {
+                    $this->summary .=
+                        $warrior->getName() . ' a attaqué '
+                        . $target->getName() . ' avec ' . $method . ' et lui a infligé '
+                        . $damages . ' dégats ';
+                    $this->summary .=
+                        $target->maybeSuccumbs($playersArray);
+                    $this->summary .= !in_array($target, $playersArray) ?
+                        $target->getName() . ' a succombé ' : '';
+                }
             }
         } else {
-            $this->summary .= "Le vainqueur est " . $this->playersAlive[0]->getName()
-                . ' il lui reste ' . $this->playersAlive[0]->getHealth() . ' PV';
+            $this->summary .= "Le vainqueur est " . $playersArray[0]->getName()
+                . ' il lui reste ' . $playersArray[0]->getHealth() . ' PV';
         }
+        // After a turn, data is sent via ajax response to view
         $data = [
             'summary' => $this->summary,
             'status' => $this->getPlayersStatus()
         ];
+        
         return $this->json($data);
     }
 }

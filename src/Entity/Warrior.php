@@ -16,7 +16,6 @@ abstract class Warrior
         $this->health = $health;
     }
 
-
     /**
      * Get the value of health
      */
@@ -128,4 +127,5 @@ abstract class Warrior
         $random_target =  count($targets) > 0 ? $targets[rand(0, count($targets) - 1)] : $targets[0];
         return $random_target;
     }
+    
 }
