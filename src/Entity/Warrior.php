@@ -113,7 +113,8 @@ abstract class Warrior
     public function fight($randMethod, Warrior $victim)
     {
         if ($randMethod == 'heal_action') { // Witch self healing
-            $this->$randMethod($this); } else {
+            $this->$randMethod($this);
+        } else {
             $this->$randMethod($victim);
         }
     }
@@ -127,6 +128,4 @@ abstract class Warrior
         $random_target =  count($targets) > 0 ? $targets[rand(0, count($targets) - 1)] : $targets[0];
         return $random_target;
     }
-
-
 }

@@ -45,7 +45,7 @@ class BattleController extends AbstractController
      */
     public function getPlayersStatus()
     {
-        return $this->json($this->playersAlive);
+        return $this->playersAlive;
     }
 
     /**
@@ -53,19 +53,21 @@ class BattleController extends AbstractController
      */
     public function nextTurn()
     {
+        $initialStatus = $this->getPlayersStatus();
         if (count($this->playersAlive) > 1) {
             for ($i = 0; $i < count($this->playersAlive); $i++) {
-                $this->summary .= $this->playersAlive[$i]->plague();
-                $this->playersAlive[$i]->maybeSuccumbs($this->playersAlive);
-                $this->summary .= !in_array($this->playersAlive[$i], $this->playersAlive) ?
-                    $this->playersAlive[$i]->getName() . ' a succombé ' : '';
-                $method = $this->playersAlive[$i]->getRandomMethod();
-                $target = $this->playersAlive[$i]->searchRandomTarget($this->playersAlive);
+                $warrior = $this->playersAlive[$i];
+                $this->summary .= $warrior->plague();
+                $warrior->maybeSuccumbs($this->playersAlive);
+                $this->summary .= !in_array($warrior, $this->playersAlive) ?
+                $warrior->getName() . ' a succombé ' : '';
+                $method = $warrior->getRandomMethod();
+                $target = $warrior->searchRandomTarget($this->playersAlive);
                 $initialHealth = $target->getHealth();
-                $this->playersAlive[$i]->$method($target);
+                $warrior->$method($target); ////////////ATTTAAAACCKK
                 $damages = $initialHealth - $target->getHealth();
                 $this->summary .=
-                    $this->playersAlive[$i]->getName() . ' a attaqué '
+                    $warrior->getName() . ' a attaqué '
                     . $target->getName() . ' avec ' . $method . ' et lui a infligé '
                     . $damages . ' dégats ';
                 $this->summary .=
@@ -77,7 +79,10 @@ class BattleController extends AbstractController
             $this->summary .= "Le vainqueur est " . $this->playersAlive[0]->getName()
                 . ' il lui reste ' . $this->playersAlive[0]->getHealth() . ' PV';
         }
-        $data = [$this->summary, $this->getPlayersStatus()];
+        $data = [
+            'summary' => $this->summary,
+            'status' => $this->getPlayersStatus()
+        ];
         return $this->json($data);
     }
 }
